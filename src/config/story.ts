@@ -10,8 +10,6 @@ export const story = {
     subtitle: 'A journey to Harsh & Rimi’s wedding',
     pari: 'My humans are getting married. Naturally, I’m organising everything.',
     pariFollow: 'Come along. I’ll show you how this all happened.',
-    primaryCta: 'Follow Pari',
-    secondaryCta: 'View Celebrations',
   },
 
   pitch: {
@@ -28,7 +26,6 @@ export const story = {
       { label: 'Day one, day two, day three…', short: 'Waiting' },
       { label: 'Rimi replied', short: 'Reply' },
     ],
-    pari: 'Three days to reply. I would have answered immediately. Especially for treats.',
   },
 
   cinema: {
@@ -37,7 +34,7 @@ export const story = {
     title: 'One movie date. A story of their own.',
     body: ['Their first in-person date was a Marvel movie in Kolkata.'],
     ticketHint: 'Tap a ticket stub in the scene, or',
-    ticketButton: 'Open the ticket',
+    ticketButton: 'See their first photo',
     ticketCaption: 'Two tickets, one movie, and the first chapter of Harsh & Rimi.',
     pari: 'A movie date, a little popcorn, and the beginning of everything.',
   },
@@ -98,15 +95,7 @@ export const story = {
     interactions: {
       football: 'Kick the football',
       album: 'Open the photo album',
-      keepsake: 'Open the Maldives keepsake',
       pari: 'Say hello to Pari',
-    },
-    maldives: {
-      title: 'A little Maldives chapter',
-      text: [
-        'Rimi’s journey has taken her from a chef’s kitchen to Qatar and now to the Maldives, where she works as a hospitality manager.',
-        'Looking after people, it turns out, is something she has always been very good at.',
-      ],
     },
     pariReactions: [
       'Yes, hello. I accept head scratches.',
@@ -119,7 +108,6 @@ export const story = {
   celebrations: {
     eyebrow: 'You’re invited',
     title: 'The celebrations',
-    intro: 'Four celebrations across Kolkata and Navi Mumbai. All times are India Standard Time.',
     pari: 'Now for the important part: you’re invited.',
     pariSecond: 'Come for the wedding. Stay for the dancing. Save me some attention.',
   },

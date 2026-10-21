@@ -15,7 +15,7 @@
   --text-soft: #6a5a61;
   --butter: #f3de8a;
   --paper: #fbf1e8;
-  --panel: rgba(255, 249, 243, 0.9);
+  --panel: rgba(255, 249, 243, 0.98);
   --line: rgba(185, 130, 118, 0.28);
   --shadow: 0 18px 50px -24px rgba(67, 54, 60, 0.35), 0 2px 8px -4px rgba(67, 54, 60, 0.12);
   --radius: 22px;
@@ -545,8 +545,8 @@ main,
   min-height: 100vh;
   min-height: 100svh;
   display: flex;
-  align-items: center;
-  padding: calc(var(--nav-h) + 24px) var(--gutter) 64px;
+  align-items: flex-end;
+  padding: calc(var(--nav-h) + 24px) var(--gutter) 96px;
 }
 
 .hero__panel {
@@ -554,7 +554,7 @@ main,
 }
 
 .hero__title {
-  font-size: clamp(3rem, 6vw, 5.4rem);
+  font-size: clamp(2.8rem, 5vw, 4.6rem);
   font-weight: 500;
   line-height: 1;
   margin-bottom: 0.2em;
@@ -571,20 +571,34 @@ main,
   margin-bottom: 0.4em;
 }
 
+.hero__reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(8px);
+  /* hiding: fade first, then close the gap */
+  transition: opacity 0.4s ease, transform 0.4s ease, grid-template-rows 0.6s ease 0.3s;
+}
+
+.hero__reveal.is-revealed {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+  /* revealing: open the space as the card rises, then fade the date in */
+  transition: grid-template-rows 0.7s ease 0.5s, opacity 0.9s ease 1s, transform 0.9s ease 1s;
+}
+
+.hero__reveal-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .hero__date {
   display: grid;
   gap: 2px;
   margin: 0.2em 0 0.9em;
   padding-left: 14px;
   border-left: 3px solid var(--rose-gold);
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.9s ease 0.9s, transform 0.9s ease 0.9s;
-}
-
-.hero__date.is-revealed {
-  opacity: 1;
-  transform: none;
 }
 
 .hero__date-day {
@@ -605,13 +619,6 @@ main,
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-soft);
-}
-
-.hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 1.4em;
 }
 
 .scroll-cue {
@@ -717,13 +724,35 @@ main,
 }
 
 .phone {
+  display: block;
   width: 128px;
-  height: 232px;
+  /* screen 112px wide x 172px tall = the chat screenshot's 910:1400 shape */
+  height: 188px;
   border-radius: 24px;
   padding: 8px;
+  border: 0;
   background: #3d3440;
   box-shadow: var(--shadow);
+  cursor: zoom-in;
 }
+
+.phone .phone__screen {
+  display: block;
+}
+
+/* The real chat, shown in full (the phone screen matches the screenshot's shape). */
+.phone__chat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.phone__state--days {
+  background: rgba(255, 249, 243, 0.55);
+}
+
 
 .phone__screen {
   position: relative;
@@ -1111,7 +1140,20 @@ main,
 
 .chapter--celebrations {
   min-height: auto;
-  padding-bottom: 30vh;
+  padding-top: 30vh;
+  padding-bottom: 6vh;
+}
+
+/* Empty stretch between chapters: the previous card scrolls away (first screen), then the
+   journey to the next island plays with nothing covering it. See lib/scroll.ts. */
+.travel-zone {
+  /* 100vh for the card to leave + the journey (--travel) + 40vh to arrive */
+  height: calc(140vh + var(--travel, 100vh));
+  pointer-events: none;
+}
+
+.is-simple .travel-zone {
+  display: none;
 }
 
 .chapter--celebrations .chapter__panel {
@@ -1135,9 +1177,7 @@ main,
 }
 
 .event-card {
-  display: grid;
-  grid-template-columns: 74px 1fr;
-  gap: 18px;
+  display: block;
   padding: 22px;
   background: rgba(255, 249, 243, 0.96);
   border: 1px solid var(--line);
@@ -1146,7 +1186,22 @@ main,
   border-top: 5px solid var(--accent);
 }
 
+.event-card__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-card__head .event-card__mood {
+  margin: 0;
+}
+
 .event-card__date {
+  flex: none;
+  width: 74px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1241,49 +1296,13 @@ main,
   margin-top: 1em;
 }
 
-.directions {
-  padding: 22px;
-  background: rgba(255, 249, 243, 0.96);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.directions h3 {
-  font-size: 1.6rem;
-}
-
-.directions ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 16px;
-}
-
-.directions li p {
-  margin: 0 0 0.2em;
-}
-
-.directions__for {
-  color: var(--text-soft);
-  font-size: 0.9rem;
-}
-
-.directions a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-weight: 600;
-}
-
 /* ------------------------------------------------------------------
    Gallery
 ------------------------------------------------------------------- */
 
 .gallery {
   position: relative;
-  padding: 18vh var(--gutter) 22vh;
+  padding: 18vh var(--gutter) 8vh;
 }
 
 .gallery__inner {
@@ -1302,10 +1321,16 @@ main,
   padding: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-auto-flow: row dense;
   gap: 12px;
 }
 
+/* Tile shapes: portrait (1 column), wide (2 columns), feature (2 columns x 2 rows). */
 .gallery__grid .is-wide {
+  grid-column: span 2;
+}
+
+.gallery__grid .is-feature {
   grid-column: span 2;
   grid-row: span 2;
 }
@@ -1315,7 +1340,7 @@ main,
   display: block;
   width: 100%;
   height: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   padding: 0;
   border: 0;
   border-radius: 16px;
@@ -1325,6 +1350,10 @@ main,
 }
 
 .is-wide .gallery__item {
+  aspect-ratio: 3 / 2;
+}
+
+.is-feature .gallery__item {
   aspect-ratio: auto;
   min-height: 100%;
 }
@@ -1357,6 +1386,13 @@ main,
 @media (max-width: 760px) {
   .gallery__grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .gallery__grid .is-feature {
+    grid-row: span 1;
+  }
+  .is-feature .gallery__item {
+    aspect-ratio: 4 / 5;
   }
   .gallery__caption {
     display: none;
@@ -1369,8 +1405,8 @@ main,
 
 .chapter--rsvp {
   min-height: auto;
-  padding-top: 10vh;
-  padding-bottom: 16vh;
+  padding-top: 30vh;
+  padding-bottom: 10vh;
 }
 
 .rsvp {
@@ -1500,7 +1536,7 @@ main,
 .choice-row,
 .event-checks {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .choice-row {
@@ -1508,16 +1544,18 @@ main,
 }
 
 .event-checks {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 
+.field .choice,
+.field .check,
 .choice,
 .check {
   display: flex;
-  gap: 10px;
+  gap: 14px;
   align-items: center;
-  min-height: 52px;
-  padding: 12px 14px;
+  min-height: 56px;
+  padding: 14px 18px;
   border-radius: 14px;
   border: 1.5px solid #e4d4cf;
   background: #fff;
@@ -1526,8 +1564,15 @@ main,
   margin: 0 !important;
 }
 
+.field .check,
 .check {
   border-left: 5px solid var(--accent);
+  padding-left: 16px;
+}
+
+.check strong {
+  display: block;
+  line-height: 1.25;
 }
 
 .choice input,
@@ -1541,8 +1586,10 @@ main,
 
 .check small {
   display: block;
+  margin-top: 3px;
+  line-height: 1.4;
   font-weight: 400;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--text-soft);
 }
 
@@ -1666,71 +1713,6 @@ main,
 /* ------------------------------------------------------------------
    Floating helpers
 ------------------------------------------------------------------- */
-
-.ask-pari {
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: calc(16px + var(--safe-b));
-  z-index: 25;
-}
-
-.ask-pari__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 52px;
-  padding: 0 18px 0 14px;
-  border-radius: 999px;
-  border: 1.5px solid var(--rose-gold);
-  background: var(--ivory);
-  color: var(--rose-deep);
-  font-weight: 600;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-}
-
-.ask-pari__btn:hover {
-  background: var(--soft-pink);
-}
-
-.ask-pari__menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 10px);
-  width: 240px;
-  padding: 14px;
-  border-radius: var(--radius);
-  background: var(--ivory);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-}
-
-.ask-pari__title {
-  margin: 0 0 6px;
-  font-family: var(--hand);
-  font-size: 1.4rem;
-}
-
-.ask-pari__menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ask-pari__menu a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 12px;
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.ask-pari__menu a:hover {
-  background: var(--soft-pink);
-}
 
 .pari-toast-region {
   position: fixed;
@@ -1938,7 +1920,7 @@ main,
 ------------------------------------------------------------------- */
 
 .site-footer {
-  padding: 56px var(--gutter) calc(110px + var(--safe-b));
+  padding: 56px var(--gutter) calc(40px + var(--safe-b));
   text-align: center;
   background: var(--paper);
   border-top: 1px solid var(--line);
@@ -1961,7 +1943,7 @@ main,
 
   .hero {
     align-items: flex-end;
-    padding-bottom: calc(76px + var(--safe-b));
+    padding-bottom: calc(20px + var(--safe-b));
   }
 
   .is-3d .hero__panel {
@@ -1976,10 +1958,6 @@ main,
     font-size: clamp(2.4rem, 11.5vw, 3.6rem);
   }
 
-  .hero__actions .btn {
-    flex: 1 1 auto;
-  }
-
   .scroll-cue {
     display: none;
   }
@@ -1987,7 +1965,11 @@ main,
   .chapter {
     min-height: auto;
     padding-top: 56svh;
-    padding-bottom: 40svh;
+    padding-bottom: 0;
+  }
+
+  .travel-zone {
+    height: calc(140svh + var(--travel, 100svh));
   }
 
   .chapter__panel {
@@ -2008,75 +1990,21 @@ main,
 
   .chapter--celebrations {
     padding-top: 46svh;
-    padding-bottom: 20vh;
+    padding-bottom: 4vh;
   }
 
   .event-list {
     margin-top: 16px;
   }
 
-  .ask-pari__btn {
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .ask-pari__btn span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .event-card {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 18px;
-  }
-
-  .event-card__date {
-    flex-direction: row;
-    gap: 8px;
-    justify-content: flex-start;
-    height: auto;
-    width: fit-content;
-    padding: 6px 14px;
-  }
-
-  .event-card__day {
-    font-size: 1.5rem;
-  }
-
-  .chapter--rsvp {
-    padding-top: 50svh;
-  }
-
-  .gallery {
-    padding-top: 30vh;
-    padding-bottom: 30vh;
-  }
-
-  .pari-toast-region {
-    bottom: calc(86px + var(--safe-b));
-  }
-
-  .loading-pill {
-    bottom: calc(84px + var(--safe-b));
-    max-width: calc(100% - 32px);
-  }
-}
-
-@media (max-width: 400px) {
+  @media (max-width: 400px) {
   .phone-seq {
     grid-template-columns: 104px 1fr;
     gap: 12px;
   }
   .phone {
     width: 104px;
-    height: 196px;
+    height: 151px;
   }
 }
 
@@ -2189,4 +2117,65 @@ main,
   .is-simple .chapter--rsvp {
     padding-top: 4vh;
   }
+}
+
+.made-with {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--text-soft);
+}
+
+.made-with__heart {
+  width: 16px;
+  height: 16px;
+  color: #d9607e;
+}
+
+.made-with a {
+  font-weight: 600;
+}
+
+/* Brief pause while Pari and the camera catch up with a fast scroll (lib/scrollHold.ts). */
+html {
+  scrollbar-gutter: stable;
+}
+
+html.scroll-hold,
+html.scroll-hold body {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Portrait screens: the step list is a plain list (no current/finished highlight). */
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1024px) {
+  .phone-steps li.is-current,
+  .phone-steps li.is-done {
+    color: var(--text-soft);
+    font-weight: 400;
+  }
+  .phone-steps li.is-current::before,
+  .phone-steps li.is-done::before {
+    background: #fff;
+    border-color: var(--line);
+  }
+}
+
+.field__label {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.check--static {
+  cursor: default;
+  background: #fff7f8;
+}
+
+.notice--info {
+  background: var(--soft-pink);
+  border: 1.5px solid var(--rose-gold);
 }

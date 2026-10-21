@@ -59,7 +59,7 @@ export const events: WeddingEvent[] = [
     id: 'wedding',
     name: 'Wedding',
     month: 12,
-    day: 6,
+    day: 5,
     time: { hour: 17, minute: 30 },
     timeSuffix: 'onwards',
     venue: 'Rajapur Boys Club',

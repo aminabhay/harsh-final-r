@@ -2,8 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ui, useUi } from '../lib/ui';
 import { eventById } from '../config/events';
-import { images, type SiteImage } from '../config/images';
-import { story } from '../config/story';
+import type { SiteImage } from '../config/images';
 import { EventDetails } from './Celebrations';
 import { ChevronLeft, ChevronRight, Close } from './icons';
 
@@ -127,20 +126,6 @@ function Lightbox({ items, index, title }: { items: SiteImage[]; index: number; 
   );
 }
 
-function MaldivesDialog() {
-  const img = images.maldivesMemory;
-  return (
-    <Modal title={story.home.maldives.title} onClose={ui.closeDialog}>
-      <figure className="dialog-figure">
-        <img src={img.src} alt={img.alt} />
-      </figure>
-      {story.home.maldives.text.map((t) => (
-        <p key={t}>{t}</p>
-      ))}
-    </Modal>
-  );
-}
-
 export function Dialogs() {
   const dialog = useUi((s) => s.dialog);
   if (!dialog) return null;
@@ -153,6 +138,5 @@ export function Dialogs() {
     );
   }
   if (dialog.type === 'lightbox') return <Lightbox key={dialog.items[dialog.index]?.id} items={dialog.items} index={dialog.index} title={dialog.title} />;
-  if (dialog.type === 'maldives') return <MaldivesDialog />;
   return null;
 }

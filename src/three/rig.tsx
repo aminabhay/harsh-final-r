@@ -4,10 +4,16 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { CHAPTERS, poses, atmospheres, pitchWarm, accentLights, revealPose, type ChapterId, type V3, type Atmosphere } from '../config/world';
 import { ui } from '../lib/ui';
+import { pariState } from './pariPath';
 import { scrollState } from '../lib/scroll';
 import { WorldContext, useWorld } from './context';
 
 const N = CHAPTERS.length;
+const followPos = new THREE.Vector3();
+const followTarget = new THREE.Vector3();
+const followOffsetWide = new THREE.Vector3(0, 2.2, 6.4);
+const followOffsetTall = new THREE.Vector3(0, 2.6, 7.2);
+const followLook = new THREE.Vector3(0, 0.35, 0);
 const v = (a: V3) => new THREE.Vector3(...a);
 const damp = THREE.MathUtils.damp;
 
@@ -54,13 +60,16 @@ export function CameraRig() {
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.1);
     const tall = size.width / size.height < 0.9;
-    const f = reduced ? Math.round(scrollState.f) : scrollState.f;
+    // The camera travels in lockstep with Pari (her progress is the scroll position eased
+    // and speed-capped), so she is always in shot during a journey.
+    const f = reduced ? Math.round(scrollState.f) : pariState.ready ? pariState.f : scrollState.f;
     const s = sample(f, tall);
 
     // Opening the invitation moves in close to the card (only while on the first island).
     const c0 = cur.current;
     c0.reveal = reduced ? (ui.get().envelopeOpen ? 1 : 0) : damp(c0.reveal, ui.get().envelopeOpen ? 1 : 0, 2.2, dt);
-    const rw = c0.reveal * Math.max(0, 1 - f);
+    // Fades out within the first moments of the journey so it never fights the follow camera.
+    const rw = c0.reveal * Math.max(0, 1 - f * 6);
     if (rw > 0.001) {
       const rp = tall ? revealPose.tall : revealPose.wide;
       const anchor = v(poses.invite.anchor);
@@ -69,6 +78,20 @@ export function CameraRig() {
       s.shiftX = THREE.MathUtils.lerp(s.shiftX, rp.shift[0], rw);
       s.shiftY = THREE.MathUtils.lerp(s.shiftY, rp.shift[1], rw);
       s.fov = THREE.MathUtils.lerp(s.fov, rp.fov, rw);
+    }
+
+    // During a journey the camera follows Pari from the side, so she never leaves the shot.
+    // It eases in/out over the first and last 15% so it hands over smoothly to each island.
+    if (pariState.running && !reduced) {
+      const t = f - Math.floor(f);
+      const w = THREE.MathUtils.smoothstep(t, 0, 0.15) * (1 - THREE.MathUtils.smoothstep(t, 0.85, 1));
+      followPos.copy(pariState.pos).add(tall ? followOffsetTall : followOffsetWide);
+      followTarget.copy(pariState.pos).add(followLook);
+      s.pos.lerp(followPos, w);
+      s.target.lerp(followTarget, w);
+      s.shiftX *= 1 - w;
+      s.shiftY *= 1 - w;
+      s.fov = THREE.MathUtils.lerp(s.fov, tall ? 44 : 36, w);
     }
 
     // Restrained pointer parallax on desktop only.
@@ -89,7 +112,7 @@ export function CameraRig() {
       c.fov = s.fov;
       c.init = true;
     } else {
-      const k = 3.2;
+      const k = 4.2;
       c.pos.set(damp(c.pos.x, s.pos.x, k, dt), damp(c.pos.y, s.pos.y, k, dt), damp(c.pos.z, s.pos.z, k, dt));
       c.target.set(damp(c.target.x, s.target.x, k, dt), damp(c.target.y, s.target.y, k, dt), damp(c.target.z, s.target.z, k, dt));
       c.sx = damp(c.sx, s.shiftX, k, dt);
@@ -126,7 +149,7 @@ const mixAtmos = (a: Atmosphere, b: Atmosphere, t: number, out: Record<string, T
 function atmosFor(id: ChapterId): Atmosphere {
   if (id !== 'pitch') return atmospheres[id];
   // Chapter one shifts from cool lavender to warm blush as the reply arrives.
-  const t = THREE.MathUtils.smoothstep(scrollState.local.pitch, 0.35, 0.62);
+  const t = THREE.MathUtils.smoothstep(scrollState.scene.pitch, 0.6, 0.95);
   const out = { bg: new THREE.Color(), sky: new THREE.Color(), ground: new THREE.Color(), sun: new THREE.Color(), accent: new THREE.Color(), hemi: 0, sunIntensity: 0, accentIntensity: 0 };
   mixAtmos(atmospheres.pitch, pitchWarm, t, out);
   return {
@@ -256,7 +279,8 @@ export function ChapterScene({
     if (near && !mounted) setMounted(true);
     const visible = f >= range[0] && f <= range[1];
     activeRef.current = visible;
-    progressRef.current = scrollState.local[id];
+    // Progress while the island is clear of cards (see lib/scroll.ts).
+    progressRef.current = scrollState.scene[id];
     if (group.current) group.current.visible = visible;
   });
 

@@ -25,6 +25,13 @@ export const site = {
    */
   calendarDurationHours: 3,
 
+  /**
+   * Which customer (couple) this site belongs to. Several couples share one Supabase database;
+   * every RSVP is saved with this id. It must exist in the `customers` table
+   * (see supabase/migrations/20261021010000_add_customer_id.sql).
+   */
+  customerId: 'harshwedsrimi',
+
   couple: {
     names: 'Harsh & Rimi',
     fullNames: { harsh: 'Harsh Patil', rimi: 'Rimi Mondal' },

@@ -166,5 +166,7 @@ export function RestingPari({ island, ...rest }: Omit<Props, 'id' | 'position' |
 }
 
 export function preloadCharacters() {
-  Object.values(characters).forEach((c) => useGLTF.preload(c.url));
+  Object.values(characters)
+    .filter((c) => c.preload)
+    .forEach((c) => useGLTF.preload(c.url));
 }

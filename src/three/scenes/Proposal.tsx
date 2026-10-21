@@ -6,6 +6,7 @@ import { islands } from '../../config/world';
 import { story } from '../../config/story';
 import { ui, useUi } from '../../lib/ui';
 import { Character, RestingPari } from '../Character';
+import { pariState } from '../pariPath';
 import { useWorld } from '../context';
 import { Balloon, Flowers, G, Island, Label, Lantern, Vase, mat, roseGold, scatterBlooms, useCanvasTexture } from '../parts';
 
@@ -77,12 +78,13 @@ function Backdrop() {
 }
 
 function RingBox() {
-  const { progressRef, reduced } = useWorld();
+  const { reduced } = useWorld();
   const lid = useRef<THREE.Group>(null);
   const gem = useRef<THREE.Mesh>(null);
   const t = useRef(0);
   useFrame(({ clock }, dt) => {
-    const goal = progressRef.current > 0.18 ? 1 : 0;
+    // Opens once the camera (and Pari) have arrived in Qatar, in clear view.
+    const goal = pariState.f > 2.97 ? 1 : 0;
     t.current = reduced ? goal : THREE.MathUtils.damp(t.current, goal, 1.6, dt);
     if (lid.current) lid.current.rotation.x = -t.current * 1.9;
     if (gem.current && !reduced) gem.current.rotation.y = clock.elapsedTime * 0.6;

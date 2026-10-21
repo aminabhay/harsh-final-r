@@ -5,9 +5,10 @@ import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { characters } from '../config/models';
 import { scrollState } from '../lib/scroll';
+import { motion } from '../lib/motion';
 import { useWorld } from './context';
 import { BlobShadow } from './parts';
-import { pariState, restingIsland, travelAt } from './pariPath';
+import { pariState, restingIsland, segments, travelAt } from './pariPath';
 
 /**
  * Pari running between islands as the guest scrolls. Her position follows the scroll along
@@ -59,11 +60,23 @@ export function RunningPari() {
     const st = s.current;
     const target = reduced ? Math.round(scrollState.f) : scrollState.f;
     // Same easing as the camera, so Pari stays in shot while she runs.
-    st.f = !st.init || reduced ? target : THREE.MathUtils.damp(st.f, target, 3.2, dt);
+    // Menu links / big jumps: appear at the destination instead of running the whole route.
+    if (!st.init || reduced || Math.abs(target - st.f) > 1.2) st.f = target;
+    else {
+      const next = THREE.MathUtils.damp(st.f, target, 4.2, dt);
+      // Cap her running speed on routes that should feel unhurried (e.g. the first one).
+      const seg = segments.find((sg) => Math.min(st.f, next) < sg.f0 + 1 && Math.max(st.f, next) > sg.f0);
+      const maxDf = seg ? (seg.maxSpeed / seg.length) * dt : Infinity;
+      st.f += THREE.MathUtils.clamp(next - st.f, -maxDf, maxDf);
+    }
     pariState.f = st.f;
+    pariState.ready = true;
+    motion.lag = Math.abs(target - st.f);
+    motion.f = st.f;
 
     const travel = reduced ? null : travelAt(st.f);
     pariState.running = !!travel;
+    motion.running = !!travel;
     pariState.restingAt = restingIsland(st.f);
     const g = group.current;
     if (!g) return;
@@ -84,6 +97,7 @@ export function RunningPari() {
 
     g.visible = true;
     g.position.copy(p);
+    pariState.pos.copy(p);
     const yaw = Math.atan2(tan.x, tan.z) + (backwards ? Math.PI : 0);
     // Shortest-path turn towards the running direction.
     let d = yaw - st.yaw;

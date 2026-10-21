@@ -6,10 +6,11 @@ import { useChapterStep } from '../lib/scroll';
 import { ui, useUi } from '../lib/ui';
 import { site } from '../config/site';
 import { eventById } from '../config/events';
+import { audience } from '../lib/audience';
 import { formatEventDate } from '../lib/dates';
-import { openTicket, openFamilyPhoto, openAlbum, openKeepsake, greetPari } from '../lib/actions';
+import { openTicket, openFamilyPhoto, openAlbum } from '../lib/actions';
 import { Countdown } from './Celebrations';
-import { ArrowDown, Heart, Paw } from './icons';
+import { ArrowDown } from './icons';
 import { PariSays } from './PariSays';
 
 /* ------------------------------------------------------------------ */
@@ -21,6 +22,8 @@ const REVEAL_MS = 1900;
 /**
  * The first downward scroll (wheel, swipe or keyboard) at the top of the page only opens the
  * envelope and reveals the date. Once the card is out, scrolling continues as normal.
+ * Scrolling all the way back up closes the envelope again (the same animation in reverse)
+ * and hides the date, ready to be revealed once more.
  */
 function useEnvelopeScrollGate(enabled: boolean, reduced: boolean) {
   useEffect(() => {
@@ -38,25 +41,47 @@ function useEnvelopeScrollGate(enabled: boolean, reduced: boolean) {
         e.preventDefault();
       }
     };
+    // Close again when the guest comes back to the very top...
+    let leftTop = window.scrollY > 40;
+    const close = () => {
+      if (ui.get().envelopeOpen && performance.now() >= unlockAt) ui.set({ envelopeOpen: false });
+    };
+    const onScroll = () => {
+      if (window.scrollY > 40) leftTop = true;
+      else if (window.scrollY <= 2 && leftTop) {
+        leftTop = false;
+        close();
+      }
+    };
+    // ...or keeps scrolling up while already at the top.
+    const upAtTop = () => {
+      if (atTop()) close();
+    };
     const onWheel = (e: WheelEvent) => {
       if (e.deltaY > 0) gate(e);
+      else if (e.deltaY < 0) upAtTop();
     };
     const onTouchStart = (e: TouchEvent) => {
       touchY = e.touches[0].clientY;
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (touchY - e.touches[0].clientY > 4) gate(e);
+      const dy = touchY - e.touches[0].clientY;
+      if (dy > 4) gate(e);
+      else if (dy < -4) upAtTop();
     };
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
       if (el.closest('input, textarea, select, button, a, [contenteditable]')) return;
       if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) gate(e);
+      else if (['ArrowUp', 'PageUp', 'Home'].includes(e.key)) upAtTop();
     };
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('keydown', onKey);
     return () => {
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
@@ -66,18 +91,12 @@ function useEnvelopeScrollGate(enabled: boolean, reduced: boolean) {
 }
 
 const wedding = eventById('wedding');
+const reception = eventById('reception');
 
 export function Hero({ reduced, is3d }: { reduced: boolean; is3d: boolean }) {
   const s = story.invite;
   const open = useUi((st) => st.envelopeOpen);
   useEnvelopeScrollGate(is3d, reduced);
-  const follow = () => {
-    const wasOpen = ui.get().envelopeOpen;
-    ui.set({ envelopeOpen: true });
-    const go = () => document.getElementById('story')?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
-    // Let the envelope open and the date show before the camera travels on.
-    setTimeout(go, reduced || wasOpen ? 0 : REVEAL_MS + 300);
-  };
   const revealed = open || !is3d;
   return (
     <section id="top" data-chapter="invite" className="hero" aria-labelledby="hero-title">
@@ -88,31 +107,38 @@ export function Hero({ reduced, is3d }: { reduced: boolean; is3d: boolean }) {
           <span className="hero__name">{site.couple.fullNames.rimi}</span>
         </h1>
         <p className="hero__subtitle">{s.subtitle}</p>
-        <p className={`hero__date${revealed ? ' is-revealed' : ''}`}>
-          <span className="hero__date-day">{formatEventDate(wedding)}</span>
-          <span className="hero__date-place">
-            {wedding.city} · Reception 12 December, Navi Mumbai
-          </span>
-        </p>
-        <Countdown />
-        <PariSays>{s.pari}</PariSays>
-        <div className="hero__actions">
-          <button type="button" className="btn btn--primary" onClick={follow}>
-            <Paw /> {s.primaryCta}
-          </button>
-          <a className="btn btn--ghost" href="#celebrations">
-            {s.secondaryCta}
-          </a>
+        {/* The date reveal: collapses away while the envelope is closed. */}
+        <div className={`hero__reveal${revealed ? ' is-revealed' : ''}`} aria-hidden={!revealed}>
+          <div className="hero__reveal-inner">
+            <p className="hero__date">
+              <span className="hero__date-day">{formatEventDate(wedding)}</span>
+              <span className="hero__date-place">
+                {wedding.city}
+                {audience.mentionReception && ` · Reception ${reception.day} December, ${reception.city}`}
+              </span>
+            </p>
+            <Countdown />
+          </div>
         </div>
+        <PariSays>{s.pari}</PariSays>
       </div>
       <figure className="simple-figure hero__figure">
-        <img src={images.couplePortrait.src} alt={images.couplePortrait.alt} style={{ objectPosition: images.couplePortrait.focus }} />
+        <img src={images.photoThree.src} alt={images.photoThree.alt} style={{ objectPosition: images.photoThree.focus }} />
       </figure>
       <a className="scroll-cue" href="#story">
         <ArrowDown /> <span>Scroll to begin the story</span>
       </a>
     </section>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Travel zone: empty page space where the journey to the next island  */
+/* plays out, with no card on screen (see lib/scroll.ts).              */
+/* ------------------------------------------------------------------ */
+
+export function TravelZone({ from, travel }: { from: ChapterId; travel?: string }) {
+  return <div className="travel-zone" data-travel={from} aria-hidden="true" style={travel ? ({ '--travel': travel } as CSSProperties) : undefined} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -166,63 +192,36 @@ function ChapterSection({
 /* Chapter one: an illustrative phone sequence (no real messages)      */
 /* ------------------------------------------------------------------ */
 
+const openFirstChat = () => ui.openDialog({ type: 'lightbox', items: [images.firstChat], index: 0, title: 'Their first chat' });
+
 function PhoneSequence() {
   const step = useChapterStep('pitch', 4, 0.06, 0.5);
   const steps = story.pitch.steps;
   return (
     <div className="phone-seq">
-      <div className="phone" aria-hidden="true" data-step={step}>
-        <div className="phone__screen">
-          <div className={`phone__state phone__state--profile${step === 0 ? ' is-on' : ''}`}>
-            <div className="mock-card">
-              <div className="mock-avatar">R</div>
-              <p className="mock-name">Rimi</p>
-              <p className="mock-sub">Kolkata</p>
-              <span className="mock-line" />
-              <span className="mock-line mock-line--short" />
-              <div className="mock-actions">
-                <span>✕</span>
-                <span className="is-like">♥</span>
-              </div>
-            </div>
-          </div>
-          <div className={`phone__state phone__state--dm${step === 1 ? ' is-on' : ''}`}>
-            <div className="mock-dm-head">
-              <span className="mock-ring">R</span>
-              <span>rimi</span>
-            </div>
-            <div className="mock-bubble mock-bubble--out">
-              <span className="mock-line" />
-              <span className="mock-line mock-line--short" />
-            </div>
-            <p className="mock-seen">Sent</p>
-          </div>
-          <div className={`phone__state phone__state--days${step === 2 ? ' is-on' : ''}`}>
+      <button type="button" className="phone" data-step={step} onClick={openFirstChat} aria-label="Read their first chat">
+        <span className="phone__screen">
+          {/* Their real first chat, shown whole. */}
+          <img className="phone__chat" src={images.firstChat.src} alt="" />
+          <span className={`phone__state phone__state--days${step === 2 ? ' is-on' : ''}`} aria-hidden="true">
             {[1, 2, 3].map((d) => (
-              <div key={d} className="mock-day" style={{ ['--i' as string]: d }}>
+              <span key={d} className="mock-day" style={{ ['--i' as string]: d }}>
                 <span>Day</span>
                 <strong>{d}</strong>
-              </div>
-            ))}
-          </div>
-          <div className={`phone__state phone__state--reply${step === 3 ? ' is-on' : ''}`}>
-            <div className="mock-notif">
-              <span className="mock-ring">R</span>
-              <span>
-                <strong>Rimi</strong> replied
               </span>
-              <Heart className="mock-heart" />
-            </div>
-          </div>
-        </div>
+            ))}
+          </span>
+        </span>
+      </button>
+      <div>
+        <ol className="phone-steps" aria-label="How it happened">
+          {steps.map((s, i) => (
+            <li key={s.short} className={i === step ? 'is-current' : i < step ? 'is-done' : ''} aria-current={i === step ? 'step' : undefined}>
+              {s.label}
+            </li>
+          ))}
+        </ol>
       </div>
-      <ol className="phone-steps" aria-label="How it happened">
-        {steps.map((s, i) => (
-          <li key={s.short} className={i === step ? 'is-current' : i < step ? 'is-done' : ''} aria-current={i === step ? 'step' : undefined}>
-            {s.label}
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }
@@ -291,26 +290,27 @@ export function StoryChapters() {
   const h = story.home;
   return (
     <>
-      <ChapterSection id="pitch" anchor="story" side="left" length="290vh" eyebrow={p.eyebrow} kicker={p.kicker} title={p.title} simpleImage="album04">
+      <ChapterSection id="pitch" anchor="story" side="left" length="170vh" eyebrow={p.eyebrow} kicker={p.kicker} title={p.title} simpleImage="photoMatchday">
         {p.body.map((t) => (
           <p key={t}>{t}</p>
         ))}
         <PhoneSequence />
-        <PariSays>{p.pari}</PariSays>
       </ChapterSection>
+      <TravelZone from="pitch" />
 
-      <ChapterSection id="cinema" side="right" length="200vh" eyebrow={c.eyebrow} kicker={c.kicker} title={c.title} simpleImage="firstDate">
+      <ChapterSection id="cinema" side="right" length="150vh" eyebrow={c.eyebrow} kicker={c.kicker} title={c.title} simpleImage="firstDate">
         {c.body.map((t) => (
           <p key={t}>{t}</p>
         ))}
         <p className="hint">
           <span className="hint--3d">{c.ticketHint} </span>
           <button type="button" className="btn btn--ghost btn--small" onClick={openTicket}>
-            🎟 {c.ticketButton}
+            📷 {c.ticketButton}
           </button>
         </p>
         <PariSays>{c.pari}</PariSays>
       </ChapterSection>
+      <TravelZone from="cinema" />
 
       <ChapterSection id="proposal" side="left" length="230vh" eyebrow={q.eyebrow} kicker={q.kicker} title={q.title} simpleImage="qatarProposal">
         <p className="lede">{q.support}</p>
@@ -321,8 +321,9 @@ export function StoryChapters() {
         <LocationMap />
         <PariSays>{q.pari}</PariSays>
       </ChapterSection>
+      <TravelZone from="proposal" />
 
-      <ChapterSection id="family" anchor="family" side="right" length="220vh" eyebrow={f.eyebrow} title={f.title}>
+      <ChapterSection id="family" anchor="family" side="right" length="160vh" eyebrow={f.eyebrow} title={f.title}>
         <ul className="family-list">
           {f.groups.map((g) => {
             const img = images[g.id as ImageKey];
@@ -342,27 +343,20 @@ export function StoryChapters() {
         </ul>
         <PariSays>{f.pari}</PariSays>
       </ChapterSection>
+      <TravelZone from="family" />
 
-      <ChapterSection id="home" side="left" length="210vh" eyebrow={h.eyebrow} kicker={h.kicker} title={h.title} simpleImage="maldivesMemory">
+      <ChapterSection id="home" side="left" length="150vh" eyebrow={h.eyebrow} kicker={h.kicker} title={h.title} simpleImage="photoHome">
         {h.body.map((t) => (
           <p key={t}>{t}</p>
         ))}
         <div className="chips" role="group" aria-label="Things to explore in their home">
-          <button type="button" className="chip chip--3d" onClick={() => ui.kick()}>
-            ⚽ {h.interactions.football}
-          </button>
           <button type="button" className="chip" onClick={() => openAlbum(0)}>
             🖼 {h.interactions.album}
-          </button>
-          <button type="button" className="chip" onClick={openKeepsake}>
-            🧳 {h.interactions.keepsake}
-          </button>
-          <button type="button" className="chip" onClick={greetPari}>
-            <Paw width={16} height={16} /> {h.interactions.pari}
           </button>
         </div>
         <PariSays>{h.pari}</PariSays>
       </ChapterSection>
+      <TravelZone from="home" />
     </>
   );
 }

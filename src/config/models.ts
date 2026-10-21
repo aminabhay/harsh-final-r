@@ -9,7 +9,7 @@
  * They are rigged and include the clips listed below; no other motions are assumed.
  */
 
-export type CharacterId = 'harsh' | 'rimi' | 'pari';
+export type CharacterId = 'harsh' | 'rimi' | 'pari' | 'harshWedding' | 'rimiWedding';
 
 export interface CharacterSpec {
   id: CharacterId;
@@ -27,6 +27,8 @@ export interface CharacterSpec {
   shadowRadius: number;
   /** Clip names inside the GLB, keyed by what we use them for. */
   clips: Record<string, string>;
+  /** Download at start-up (true) or only when its scene comes near (false). */
+  preload: boolean;
 }
 
 const base = import.meta.env.BASE_URL;
@@ -41,6 +43,7 @@ export const characters: Record<CharacterId, CharacterSpec> = {
     groundOffset: 0,
     heightM: 1.905,
     shadowRadius: 0.42,
+    preload: true,
     // Idle: chest + head breathing. Wave: left arm. Walk: legs + arms (only for real travel).
     clips: { idle: 'Idle', wave: 'Wave', walk: 'Walk' },
   },
@@ -50,9 +53,10 @@ export const characters: Record<CharacterId, CharacterSpec> = {
     url: `${base}models/rimi.glb`,
     scale: 1,
     rotationY: 0,
-    groundOffset: 0,
+    groundOffset: -0.016, // v2 mesh's lowest point is 1.6 cm above y = 0
     heightM: 1.56,
     shadowRadius: 0.36,
+    preload: true,
     clips: { idle: 'Idle', wave: 'Wave', walk: 'Walk' },
   },
   pari: {
@@ -64,9 +68,11 @@ export const characters: Record<CharacterId, CharacterSpec> = {
     groundOffset: 0,
     heightM: 0.7,
     shadowRadius: 0.5,
+    preload: true,
     // Idle: neck/head. TailWag: tail. Pant: jaw/tongue. LookAround: head/ear.
-    // Walk / WalkHappy exist but are not used. Pari never slides across the floor;
-    // a paw-print trail links the chapters instead.
+    // WalkHappy (an in-place run cycle) drives Pari's runs between islands
+    // (three/RunningPari.tsx); her stride follows the distance covered, so she never slides.
+    // Source: character pack v3 (17 Oct 2026). Previous model kept in models-source/archive/.
     clips: {
       idle: 'Idle',
       tailWag: 'TailWag',
@@ -75,5 +81,31 @@ export const characters: Record<CharacterId, CharacterSpec> = {
       walk: 'Walk',
       walkHappy: 'WalkHappy',
     },
+  },
+  // Wedding outfits (builder v2, 21 Oct 2026), used only in the celebrations garden.
+  // Same rigs and clips as the everyday models; loaded when that scene comes near.
+  harshWedding: {
+    id: 'harshWedding',
+    label: 'Harsh (wedding outfit)',
+    url: `${base}models/wedding-harsh.glb`,
+    scale: 1,
+    rotationY: 0,
+    groundOffset: 0,
+    heightM: 1.905,
+    shadowRadius: 0.42,
+    preload: false,
+    clips: { idle: 'Idle', wave: 'Wave', walk: 'Walk' },
+  },
+  rimiWedding: {
+    id: 'rimiWedding',
+    label: 'Rimi (wedding outfit)',
+    url: `${base}models/wedding-rimi.glb`,
+    scale: 1,
+    rotationY: 0,
+    groundOffset: -0.014, // lowest point of this mesh is 1.4 cm above y = 0
+    heightM: 1.56,
+    shadowRadius: 0.4,
+    preload: false,
+    clips: { idle: 'Idle', wave: 'Wave', walk: 'Walk' },
   },
 };

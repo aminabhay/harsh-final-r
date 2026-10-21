@@ -24,9 +24,11 @@ npm run preview    # serves the production build
 
 | Character | Original (untouched) | Runtime file |
 |---|---|---|
-| Harsh | `models-source/harsh.glb` | `public/models/harsh.glb` |
-| Rimi  | `models-source/rimi.glb`  | `public/models/rimi.glb`  |
-| Pari  | `models-source/pari.glb`  | `public/models/pari.glb`  |
+| Harsh | `models-source/harsh.glb` (builder v2; v1 in `models-source/archive/`) | `public/models/harsh.glb` |
+| Rimi  | `models-source/rimi.glb` (builder v2, grounded with `groundOffset: -0.016`; v1 in `models-source/archive/`) | `public/models/rimi.glb`  |
+| Pari  | `models-source/pari.glb` (pack v3, 17 Oct 2026; v1 in `models-source/archive/`) | `public/models/pari.glb`  |
+| Harsh, wedding outfit | `models-source/wedding-harsh.glb` (celebrations garden only) | `public/models/wedding-harsh.glb` |
+| Rimi, wedding outfit | `models-source/wedding-rimi.glb` (celebrations garden only; `groundOffset: -0.014`) | `public/models/wedding-rimi.glb` |
 
 To replace a model, drop the new GLB into `models-source/` and run `npm run models`. That
 compresses every GLB in that folder with meshopt (about 1.7 MB down to about 300 KB) and writes
@@ -63,8 +65,23 @@ and a notice appears. No substitute character is ever shown.
 | Island layout, camera framing, lighting moods | `src/config/world.ts` |
 | Palette | `src/config/theme.ts` and the `:root` block in `src/styles/global.css` |
 
+### Who sees which celebrations (three links)
+Configured in `src/config/audiences.ts`:
+
+| Link | Guest | Sees |
+|---|---|---|
+| `https://your-site/` | Default (most guests) | Reception only. The invitation still says the wedding is on 5 December in Kolkata (no time). |
+| `https://your-site/?invite=kolkata` | Wedding guests | Wedding only; no mention of the reception. |
+| `https://your-site/?invite=family` | Close family | All four celebrations. |
+
+This controls the event cards, the 3D pavilions, the invitation card, the hero date line, the
+countdown, the RSVP choices (single-event guests don't have to pick) and the Sangeet song
+request. Each RSVP records which link was used (`audience`). Change the codes in
+`audiences.ts`; unknown codes fall back to the default. It curates the view, it is not
+access control: someone who edits their link can see more.
+
 ### Dates
-`weddingYear` in `src/config/site.ts` is **2026** (Wedding Sunday 6 December, Reception
+`weddingYear` in `src/config/site.ts` is **2026** (Wedding Saturday 5 December, Reception
 12 December). This enables the countdown and calendar export. Times are Asia/Kolkata and are
 never converted. Calendar files use `calendarDurationHours: 3` because no end times were
 supplied; change it in `site.ts`.
@@ -72,29 +89,72 @@ supplied; change it in `site.ts`.
 ### Opening sequence
 On the 3D view, the first downward scroll (wheel, swipe, arrow/space keys) at the top of the
 page only opens the envelope and reveals the date card; scrolling then continues normally.
-Links, "Follow Pari", Simple View and reduced motion are unaffected. The gate lives in
+Links, Simple View and reduced motion are unaffected. The gate lives in
 `useEnvelopeScrollGate` in `src/components/Chapters.tsx`.
 
-### Pari between islands
-`src/three/RunningPari.tsx` makes Pari run along the paper path as you scroll, using the
-supplied `WalkHappy` clip driven by distance covered (she eases to `Idle` if you stop
-mid-way). Her resting spots per island are `pariSpots` in `src/config/world.ts`; the route and
-paw prints are shared in `src/three/pariPath.ts`.
+### Pari between islands (and nothing behind a card)
+Between every two chapters there is a **travel zone** (`<TravelZone>`, `[data-travel]`): an
+empty stretch of page. The previous card scrolls fully away first, then Pari runs to the next
+island (`src/three/RunningPari.tsx`, supplied `WalkHappy` clip, stride matched to distance)
+while the camera follows her, then a short clear stretch lets her arrive before the next card
+appears. Each island's own animations (calendar pages, phone, lighting, ring box) play while
+the scene is clear (`scrollState.scene` in `src/lib/scroll.ts`). If a guest scrolls faster than
+the journey can play, scrolling pauses briefly until Pari catches up
+(`src/lib/scrollHold.ts`); menu links are never blocked. Resting spots: `pariSpots` in
+`src/config/world.ts`; route and paw prints: `src/three/pariPath.ts`.
 
-### Replacing the stock photos
-The current photos are stock images from Openverse (CC0 / CC BY / CC BY-SA, resized); they do
-not show the couple or their families. They are shown without labels or credits; replace them
-all before publishing (several are CC BY / CC BY-SA, which require attribution if kept).
-To swap a photo, put it in `public/images/real/`, update that key in `src/config/images.ts`
-(`src`, `alt`, `caption`) and delete its `credit`. Layouts crop with `object-fit: cover`;
-use `focus` (CSS `object-position`) to keep faces in frame.
+### Photos
+The photo album uses the couple's real photos in `public/images/album/` (entries `photo*` in
+`src/config/images.ts`, ordered by `albumKeys`). Each has a caption, alt text, a `focus`
+(CSS `object-position`, controls the crop) and an optional `layout`: `'feature'` (large tile),
+`'wide'` (landscape) or default portrait. The same photos appear on the home scene's walls
+and in Simple View.
 
-### Making RSVPs real
-Set `endpoint` in `src/config/rsvp.ts` to a service that accepts a JSON `POST` (Formspree,
-Getform, a Google Apps Script web app or your own API). A 2xx response shows the paw-print
-stamp confirmation. **Until an endpoint is set, nothing is sent:** guests who press
-"Send RSVP" see "Your RSVP wasn't sent" (never a false confirmation). Payload: `RsvpPayload`
-in `src/lib/rsvp.ts`, including a `submissionId` for de-duplication.
+Real photos in `public/images/real/`: the ticket photo (`firstDate`), Harsh with his parents
+(`harshParents`), Rimi with her mother (`rimiMother`), Harsh & Rimi with Pari
+(`familyWithPari`) and their first chat
+(`firstChat`, shown in the Chapter One phone). Photos are re-encoded upright with all
+metadata (including phone GPS location) stripped before being published.
+
+Stock placeholder still used: `qatarProposal` (Simple View). They are uncredited, so replace them before
+publishing.
+
+### RSVPs with Supabase
+1. Create a Supabase project. In **SQL Editor**, run both files in `supabase/migrations/`
+   in order (or `supabase db push` with the CLI):
+   `20261021000000_create_rsvps.sql`, then `20261021010000_add_customer_id.sql`.
+2. Copy the **Project URL** and the **anon / publishable key** (Project Settings -> API) into
+   `.env` (template: `.env.example`):
+   ```
+   VITE_SUPABASE_URL=https://xxxx.supabase.co
+   VITE_SUPABASE_ANON_KEY=...
+   ```
+   Never use the `service_role` / secret key in the website. Restart `npm run dev` after
+   editing `.env`, and set the same two variables in your hosting provider before building.
+3. RSVPs appear in **Table Editor -> rsvps**.
+
+How it behaves:
+- The website can only **insert** RSVPs (Row Level Security + grants). Nobody can read, edit or
+  delete RSVPs from the browser; guests' contact details stay private.
+- **Shared database, several couples:** every RSVP has a `customer_id` (this site:
+  `harshwedsrimi`, set in `src/config/site.ts` as `customerId`). It must exist in the
+  `customers` table; add a couple with
+  `insert into customers (id, name) values ('newcouple', 'New Couple');`.
+  Filter the RSVPs table by `customer_id` to see one couple's guests.
+- **One RSVP per guest, per couple:** an email (case-insensitive) or phone number (last 10
+  digits, any format) that already exists *for this customer* is rejected by the database, and the guest sees *"You have
+  already RSVP'd. To make any changes, please connect with the bride or groom directly."*
+  To let someone RSVP again, delete their row in the dashboard.
+- Each form fill has a `submission_id`, so an accidental resend is not counted twice.
+- Columns: customer_id, name, contact (email or phone), attending, events, party size (including the
+  guest), dietary, message, Sangeet song request, which invite link was used (`audience`),
+  and `created_at`.
+- Code: `src/lib/supabase.ts` (client, loaded only when someone submits) and
+  `src/lib/rsvp.ts` (`submitToSupabase`).
+
+### Cinema screen
+The image on the 3D cinema screen is `public/images/cinema/screen.webp` (supplied by the
+couple). Replace that file to change it; it is cover-fitted to the screen's 2:1 frame.
 
 ### Music
 The soft background music is composed live in the browser with the Web Audio API

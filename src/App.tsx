@@ -2,12 +2,13 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { detectWebGL, storage, useReducedMotion } from './lib/device';
 import { requestMeasure, startScrollTracking, useActiveChapter } from './lib/scroll';
 import { useUi } from './lib/ui';
-import { Hero, StoryChapters } from './components/Chapters';
+import { useTravelScrollHold } from './lib/scrollHold';
+import { Hero, StoryChapters, TravelZone } from './components/Chapters';
 import { CelebrationsSection } from './components/Celebrations';
 import { GallerySection } from './components/Gallery';
 import { RsvpSection } from './components/Rsvp';
 import { Dialogs } from './components/Dialogs';
-import { AskPari, Footer, LoadingPill, Nav, Notices, PariToast } from './components/Layout';
+import { Footer, LoadingPill, Nav, Notices, PariToast } from './components/Layout';
 
 // The 3D bundle loads after the HTML is usable.
 const Experience = lazy(() => import('./three/Experience'));
@@ -46,6 +47,7 @@ export default function App() {
   const [simple, setSimple] = useState(initialSimple);
   const lost = useUi((s) => s.webglLost);
   const show3d = webgl && !simple && !lost;
+  useTravelScrollHold(show3d && !reduced);
 
   useEffect(() => {
     startScrollTracking();
@@ -79,13 +81,15 @@ export default function App() {
       <Notices webgl={webgl} />
       <main id="main">
         <Hero reduced={reduced} is3d={show3d} />
+        <TravelZone from="invite" travel="220vh" />
         <StoryChapters />
         <CelebrationsSection />
+        <TravelZone from="celebrations" />
         <GallerySection />
+        <TravelZone from="photos" />
         <RsvpSection />
       </main>
       <Footer canUse3d={webgl} simple={simple} onToggleSimple={toggleSimple} />
-      <AskPari />
       <PariToast />
       <Dialogs />
     </>

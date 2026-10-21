@@ -3,8 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { palette } from '../../config/theme';
 import { islands } from '../../config/world';
-import { story } from '../../config/story';
-import { ui, useUi } from '../../lib/ui';
+import { useUi } from '../../lib/ui';
+import { greetPari } from '../../lib/actions';
 import { Character, RestingPari } from '../Character';
 import { useWorld } from '../context';
 import { Bush, G, Island, Label, mat, roseGold, glowMat, useCanvasTexture } from '../parts';
@@ -101,7 +101,7 @@ function DeskCalendar() {
   const turned = useRef([0, 0, 0]);
   useFrame((_, dt) => {
     const p = progressRef.current;
-    [0.3, 0.38, 0.46].forEach((th, i) => {
+    [0.3, 0.5, 0.7].forEach((th, i) => {
       const goal = p > th ? 1 : 0;
       turned.current[i] = reduced ? goal : THREE.MathUtils.damp(turned.current[i], goal, 8, dt);
       const g = pages.current[i];
@@ -143,7 +143,7 @@ function Phone() {
   const screen = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
     if (!screen.current) return;
-    const replied = progressRef.current > 0.5;
+    const replied = progressRef.current > 0.85;
     screen.current.emissiveIntensity = replied ? (reduced ? 1.2 : 1 + Math.sin(clock.elapsedTime * 3) * 0.25) : 0.25;
     screen.current.emissive.set(replied ? palette.blush : '#B8B0E8');
   });
@@ -211,7 +211,7 @@ export function PitchScene() {
       </group>
       <Football position={[0.85, 0.11, 0.9]} />
       <Character id="harsh" position={[0.2, 0, 0.6]} rotationY={0.18} play={['idle']} />
-      <RestingPari island="pitch" play={['idle', 'lookAround']} ping={ping} onSelect={() => ui.pari(story.pitch.pari)} />
+      <RestingPari island="pitch" play={['idle', 'lookAround']} ping={ping} onSelect={greetPari} />
       <group position={[-3.6, 0, 3.2]} rotation={[0, 0.5, 0]}>
         <mesh geometry={G.cyl} material={mat(palette.wood)} position={[0, 0.35, 0]} scale={[0.03, 0.7, 0.03]} />
         <mesh geometry={G.box} material={mat(palette.ivory)} position={[0, 0.72, 0]} scale={[0.8, 0.26, 0.04]} castShadow />

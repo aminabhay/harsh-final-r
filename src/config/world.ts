@@ -56,7 +56,7 @@ export const poses: Record<ChapterId, ChapterPose> = {
   invite: {
     anchor: at('invite'),
     wide: { pos: [0.4, 2.1, 7.2], target: [0.3, 1.05, 0], shift: [0.2, 0], fov: 34 },
-    tall: { pos: [0.3, 3.4, 11.8], target: [0.3, 0.55, 0], shift: [0, 0.3], fov: 40 },
+    tall: { pos: [3.1, 2.6, 8.9], target: [0.2, 0.75, 0], shift: [0, 0.16], fov: 40 },
   },
   pitch: {
     anchor: at('pitch'),
@@ -102,8 +102,8 @@ export const poses: Record<ChapterId, ChapterPose> = {
 
 /** Closer framing of the opened invitation card (blended in once the envelope opens). */
 export const revealPose: { wide: Pose; tall: Pose } = {
-  wide: { pos: [-0.15, 1.55, 4.3], target: [-0.4, 1.12, -0.15], shift: [0.2, 0], fov: 34 },
-  tall: { pos: [-0.35, 1.95, 7.1], target: [-0.45, 0.95, -0.15], shift: [0, 0.27], fov: 40 },
+  wide: { pos: [0.25, 1.65, 5.6], target: [0.15, 1.02, -0.1], shift: [0.2, 0], fov: 34 },
+  tall: { pos: [2.7, 2.0, 7.9], target: [0.05, 0.95, -0.1], shift: [0, 0.22], fov: 40 },
 };
 
 /** Lighting + background mood per chapter (blended while travelling). */
@@ -122,7 +122,7 @@ export const atmospheres: Record<ChapterId, Atmosphere> = {
   invite: { bg: '#FFF4EE', sky: '#FFF6F0', ground: '#E8D4C8', hemi: 1.5, sun: '#FFE9D6', sunIntensity: 2.1, accent: '#F5C9C2', accentIntensity: 0.0 },
   // pitch is blended between `pitch` (cool lavender) and `pitchWarm` by the chapter's own progress.
   pitch: { bg: '#E6E0F2', sky: '#E2DAF5', ground: '#B9C7D6', hemi: 1.25, sun: '#D9D4FF', sunIntensity: 1.8, accent: '#C7BBF0', accentIntensity: 18 },
-  cinema: { bg: '#E7DCEA', sky: '#EADDF0', ground: '#C9AFC2', hemi: 1.05, sun: '#F1DDF0', sunIntensity: 1.2, accent: '#FFE6B8', accentIntensity: 22 },
+  cinema: { bg: '#4A3A50', sky: '#8A7395', ground: '#2E2433', hemi: 0.9, sun: '#FFE3C8', sunIntensity: 0.95, accent: '#FFD8A8', accentIntensity: 30 },
   proposal: { bg: '#F6DCD3', sky: '#FFE2D2', ground: '#D9A99A', hemi: 1.15, sun: '#FFC9A3', sunIntensity: 1.7, accent: '#FFB98A', accentIntensity: 16 },
   family: { bg: '#F2F5EC', sky: '#FFF7EC', ground: '#C9DCCB', hemi: 1.5, sun: '#FFF0DC', sunIntensity: 2.1, accent: '#FFE7C9', accentIntensity: 0 },
   home: { bg: '#FBF0EA', sky: '#FFF5EC', ground: '#E3CDBF', hemi: 1.45, sun: '#FFE8D0', sunIntensity: 1.9, accent: '#FFD9B0', accentIntensity: 8 },
@@ -139,7 +139,7 @@ export const pitchWarm: Atmosphere = {
 export const accentLights: Record<ChapterId, V3> = {
   invite: [2, 3, 2],
   pitch: [-3.2, 4.5, -2.6],
-  cinema: [-2.2, 2.1, 2.6],
+  cinema: [0, 2.8, 2.6],
   proposal: [0, 2.6, 1.6],
   family: [0, 3, 2],
   home: [1.6, 3.2, 0.2],

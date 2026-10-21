@@ -4,9 +4,11 @@ import * as THREE from 'three';
 import { palette } from '../../config/theme';
 import { islands } from '../../config/world';
 import { ui, useUi } from '../../lib/ui';
+import { scrollState } from '../../lib/scroll';
 import { story } from '../../config/story';
 import { site } from '../../config/site';
 import { eventById } from '../../config/events';
+import { audience } from '../../lib/audience';
 import { eventStartUtc, formatEventTime } from '../../lib/dates';
 
 const wedding = eventById('wedding');
@@ -32,22 +34,31 @@ const flapShape = (() => {
 })();
 
 function Envelope() {
-  const { reduced, progressRef } = useWorld();
+  const { reduced } = useWorld();
   const open = useUi((s) => s.envelopeOpen);
   const flap = useRef<THREE.Group>(null);
   const card = useRef<THREE.Group>(null);
   const t = useRef(0);
 
   useFrame((_, dt) => {
-    // Opens on "Follow Pari", or naturally once the guest starts scrolling.
-    const goal = open || progressRef.current > 0.62 ? 1 : 0;
-    t.current = reduced ? goal : THREE.MathUtils.damp(t.current, goal, 2.4, dt);
+    // Opens on the first scroll at the top of the page (or once the guest scrolls past).
+    // Stays open while the guest has travelled on; closes again back at the top.
+    const goal = open || scrollState.f > 0.02 ? 1 : 0;
+    // Constant-speed timeline (1.6 s each way) so every step gets its own time.
+    t.current = reduced ? goal : THREE.MathUtils.clamp(t.current + Math.sign(goal - t.current) * (dt / 1.6), 0, 1);
     // Flap swings forward and up, settling just behind the hinge; the card rises clear of
     // the pocket, then steps forward so it sits in front of the open flap.
-    const flapT = THREE.MathUtils.smoothstep(t.current, 0, 0.45);
-    const riseT = THREE.MathUtils.smoothstep(t.current, 0.3, 0.8);
-    const forwardT = THREE.MathUtils.smoothstep(t.current, 0.75, 1);
-    if (flap.current) flap.current.rotation.x = -flapT * Math.PI * 1.05;
+    // Strictly one after another: the flap is fully open before the card starts to rise,
+    // so the flap never sweeps across the card (and the reverse when closing).
+    const flapT = THREE.MathUtils.smoothstep(t.current, 0, 0.36);
+    const riseT = THREE.MathUtils.smoothstep(t.current, 0.4, 0.84);
+    const forwardT = THREE.MathUtils.smoothstep(t.current, 0.86, 1);
+    if (flap.current) {
+      flap.current.rotation.x = -flapT * Math.PI * 1.05;
+      // The flap belongs to the back panel: once it is up, its hinge sits behind the card,
+      // so no strip of pink crosses the card as it rises.
+      flap.current.position.z = 0.028 - flapT * 0.08;
+    }
     if (card.current) {
       card.current.position.y = -0.05 + riseT * 0.86;
       card.current.position.z = -0.005 + forwardT * 0.075;
@@ -84,11 +95,13 @@ function Envelope() {
           {`${wedding.day} ${MONTH} ${site.weddingYear ?? ''}`.trim()}
         </Label>
         <Label size={0.038} font="sans" color={palette.text} position={[0, -0.255, 0.012]} letterSpacing={0.14}>
-          {`${weekday}${formatEventTime(wedding).toUpperCase()} · ${wedding.city.toUpperCase()}`}
+          {`${weekday}${audience.showWeddingTime ? `${formatEventTime(wedding).toUpperCase()} · ` : ''}${wedding.city.toUpperCase()}`}
         </Label>
-        <Label size={0.034} font="sans" color={palette.roseGold} position={[0, -0.355, 0.012]} letterSpacing={0.14}>
-          {`RECEPTION · ${reception.day} ${MONTH.toUpperCase()} · ${reception.city.toUpperCase()}`}
-        </Label>
+        {audience.mentionReception && (
+          <Label size={0.034} font="sans" color={palette.roseGold} position={[0, -0.355, 0.012]} letterSpacing={0.14}>
+            {`RECEPTION · ${reception.day} ${MONTH.toUpperCase()} · ${reception.city.toUpperCase()}`}
+          </Label>
+        )}
       </group>
       {/* front pocket: two side triangles + bottom triangle feel */}
       <mesh geometry={G.box} material={blush} position={[0, -0.2, 0.012]} scale={[1.8, 0.8, 0.02]} castShadow />

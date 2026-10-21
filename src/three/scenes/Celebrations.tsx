@@ -1,10 +1,11 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactElement, type ReactNode } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { palette } from '../../config/theme';
 import { islands } from '../../config/world';
 import { story } from '../../config/story';
 import { events, type EventId } from '../../config/events';
+import { visibleEvents } from '../../lib/audience';
 import { formatShortDate } from '../../lib/dates';
 import { ui, useUi } from '../../lib/ui';
 import { Character, RestingPari } from '../Character';
@@ -198,6 +199,28 @@ function Reception() {
   );
 }
 
+const SETTINGS: Record<EventId, () => ReactElement> = { sangeet: Sangeet, haldi: Haldi, wedding: Wedding, reception: Reception };
+
+/** Pavilion slots for however many celebrations this guest sees. */
+const PAVILION_LAYOUTS: { pos: [number, number, number]; rot: number }[][] = [
+  [{ pos: [1.6, 0, -3.8], rot: -0.15 }],
+  [
+    { pos: [-1.9, 0, -2.8], rot: 0.22 },
+    { pos: [1.9, 0, -2.8], rot: -0.22 },
+  ],
+  [
+    { pos: [-3.4, 0, -1.9], rot: 0.45 },
+    { pos: [0, 0, -3.1], rot: 0 },
+    { pos: [3.4, 0, -1.9], rot: -0.45 },
+  ],
+  [
+    { pos: [-4.4, 0, -0.9], rot: 0.6 },
+    { pos: [-1.55, 0, -2.9], rot: 0.18 },
+    { pos: [1.55, 0, -2.9], rot: -0.18 },
+    { pos: [4.4, 0, -0.9], rot: -0.6 },
+  ],
+];
+
 export function CelebrationsScene() {
   const r = islands.celebrations.radius;
   const ping = useUi((s) => s.pariPing);
@@ -208,25 +231,22 @@ export function CelebrationsScene() {
   return (
     <Island radius={r} top={palette.mint}>
       <mesh geometry={G.cyl} material={mat(palette.paper)} position={[0, 0.005, 0.8]} scale={[2.2, 0.01, 2.2]} receiveShadow />
-      <Pavilion id="sangeet" position={[-4.4, 0, -0.9]} rotationY={0.6}>
-        <Sangeet />
-      </Pavilion>
-      <Pavilion id="haldi" position={[-1.55, 0, -2.9]} rotationY={0.18}>
-        <Haldi />
-      </Pavilion>
-      <Pavilion id="wedding" position={[1.55, 0, -2.9]} rotationY={-0.18}>
-        <Wedding />
-      </Pavilion>
-      <Pavilion id="reception" position={[4.4, 0, -0.9]} rotationY={-0.6}>
-        <Reception />
-      </Pavilion>
+      {visibleEvents.map((e, i) => {
+        const slot = PAVILION_LAYOUTS[visibleEvents.length - 1][i];
+        const Setting = SETTINGS[e.id];
+        return (
+          <Pavilion key={e.id} id={e.id} position={slot.pos} rotationY={slot.rot}>
+            <Setting />
+          </Pavilion>
+        );
+      })}
       <Flowers blooms={blooms} />
       <Tree position={[-6.6, 0, -4.2]} />
       <Tree position={[6.4, 0, -4.4]} scale={1.1} />
       <Bush position={[-7.3, 0, 1.8]} />
       <Bush position={[7.2, 0, 1.6]} color={palette.sage} />
-      <Character id="harsh" position={[-0.65, 0, 1.2]} rotationY={0.12} play={['idle', 'wave']} />
-      <Character id="rimi" position={[0.6, 0, 1.25]} rotationY={-0.12} play={['idle', 'wave']} />
+      <Character id="harshWedding" position={[-0.65, 0, 1.2]} rotationY={0.12} play={['idle', 'wave']} />
+      <Character id="rimiWedding" position={[0.6, 0, 1.25]} rotationY={-0.12} play={['idle', 'wave']} />
       <RestingPari island="celebrations" play={['idle', 'tailWag']} ping={ping} onSelect={() => ui.pari(story.celebrations.pariSecond)} />
     </Island>
   );

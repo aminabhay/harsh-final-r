@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { events, type EventId } from '../config/events';
+import type { EventId } from '../config/events';
+import { audience, canSee, visibleEvents } from '../lib/audience';
 import { story } from '../config/story';
 import { rsvpConfig } from '../config/rsvp';
+import { site } from '../config/site';
 import { formatShortDate, formatEventTime } from '../lib/dates';
 import { looksLikeEmail, looksLikePhone, newSubmissionId, submitRsvp } from '../lib/rsvp';
 import { storage } from '../lib/device';
 import { Paw } from './icons';
-import { PariSays } from './PariSays';
 
 type Attending = 'yes' | 'no' | '';
 interface Draft {
@@ -25,7 +26,7 @@ const EMPTY: Draft = { fullName: '', contactType: 'email', contact: '', attendin
 const DRAFT_KEY = 'hr-rsvp-draft';
 const SENT_KEY = 'hr-rsvp-sent';
 
-type Status = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'success' } | { kind: 'error'; message: string };
+type Status = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'success' } | { kind: 'duplicate' } | { kind: 'error'; message: string };
 type Errors = Partial<Record<'fullName' | 'contact' | 'attending' | 'events' | 'partySize', string>>;
 
 function loadDraft(): Draft {
@@ -37,6 +38,10 @@ function loadDraft(): Draft {
   }
 }
 
+/** A guest invited to a single celebration doesn't need to pick it. */
+const singleEvent = visibleEvents.length === 1 ? visibleEvents[0] : null;
+const chosenEvents = (d: Draft): EventId[] => (singleEvent ? [singleEvent.id] : d.events.filter(canSee));
+
 function validate(d: Draft): Errors {
   const e: Errors = {};
   if (d.fullName.trim().length < 2) e.fullName = 'Please enter your full name.';
@@ -45,7 +50,7 @@ function validate(d: Draft): Errors {
   else if (d.contactType === 'phone' && !looksLikePhone(d.contact)) e.contact = 'Please enter a phone number with country code, e.g. +91 98765 43210.';
   if (!d.attending) e.attending = 'Please let us know if you can join.';
   if (d.attending === 'yes') {
-    if (!d.events.length) e.events = 'Please choose at least one celebration.';
+    if (!chosenEvents(d).length) e.events = 'Please choose at least one celebration.';
     const n = Number(d.partySize);
     if (!Number.isInteger(n) || n < 1 || n > rsvpConfig.maxPartySize) e.partySize = `Please enter a number from 1 to ${rsvpConfig.maxPartySize}.`;
   }
@@ -77,7 +82,7 @@ export function RsvpSection() {
 
   const update = <K extends keyof Draft>(k: K, v: Draft[K]) => {
     setD((prev) => ({ ...prev, [k]: v }));
-    if (status.kind === 'error') setStatus({ kind: 'idle' });
+    if (status.kind === 'error' || status.kind === 'duplicate') setStatus({ kind: 'idle' });
     // A changed form is a new submission.
     submissionId.current = newSubmissionId();
   };
@@ -97,15 +102,18 @@ export function RsvpSection() {
     inFlight.current = true;
     setStatus({ kind: 'submitting' });
     const result = await submitRsvp({
+      customerId: site.customerId,
       submissionId: submissionId.current,
+      audience: audience.id,
       fullName: d.fullName.trim(),
       contact: d.contact.trim(),
       contactType: d.contactType,
-      events: d.attending === 'yes' ? d.events : [],
+      attending: d.attending === 'yes',
+      events: d.attending === 'yes' ? chosenEvents(d) : [],
       partySize: d.attending === 'yes' ? Number(d.partySize) : 0,
       dietary: d.dietary.trim(),
       message: d.message.trim(),
-      songRequest: d.songRequest.trim(),
+      songRequest: canSee('sangeet') ? d.songRequest.trim() : '',
       submittedAt: new Date().toISOString(),
     });
     inFlight.current = false;
@@ -113,6 +121,8 @@ export function RsvpSection() {
       setStatus({ kind: 'success' });
       storage.remove(DRAFT_KEY);
       storage.set(SENT_KEY, '1');
+    } else if (result.duplicate) {
+      setStatus({ kind: 'duplicate' });
     } else {
       setStatus({ kind: 'error', message: result.error });
     }
@@ -162,7 +172,7 @@ export function RsvpSection() {
                 <ul>
                   {errorList.map(([k, m]) => (
                     <li key={k}>
-                      <a href={`#${fieldId(k === 'attending' ? 'attending-yes' : k === 'events' ? `ev-${events[0].id}` : k)}`}>{m}</a>
+                      <a href={`#${fieldId(k === 'attending' ? 'attending-yes' : k === 'events' ? `ev-${visibleEvents[0].id}` : k)}`}>{m}</a>
                     </li>
                   ))}
                 </ul>
@@ -223,10 +233,23 @@ export function RsvpSection() {
 
             {d.attending === 'yes' && (
               <>
+                {singleEvent ? (
+                  <div className="field">
+                    <p className="field__label">Your invitation</p>
+                    <div className="check check--static" style={{ ['--accent' as string]: singleEvent.accent }}>
+                      <span>
+                        <strong>{singleEvent.name}</strong>
+                        <small>
+                          {formatShortDate(singleEvent).day} {formatShortDate(singleEvent).month} · {formatEventTime(singleEvent)} · {singleEvent.city}
+                        </small>
+                      </span>
+                    </div>
+                  </div>
+                ) : (
                 <fieldset className="field" aria-describedby={describe('events')}>
                   <legend>Which celebrations will you join?</legend>
                   <div className="event-checks">
-                    {events.map((e) => {
+                    {visibleEvents.map((e) => {
                       const sd = formatShortDate(e);
                       return (
                         <label key={e.id} className="check" style={{ ['--accent' as string]: e.accent }}>
@@ -243,6 +266,7 @@ export function RsvpSection() {
                   </div>
                   {err('events')}
                 </fieldset>
+                )}
 
                 <div className="field field--narrow">
                   <label htmlFor={fieldId('partySize')}>Number of guests in your party</label>
@@ -270,12 +294,14 @@ export function RsvpSection() {
                   <input id={fieldId('dietary')} value={d.dietary} onChange={(e) => update('dietary', e.target.value)} placeholder="e.g. vegetarian, nut allergy" />
                 </div>
 
-                <div className="field">
-                  <label htmlFor={fieldId('song')}>
-                    Sangeet song request <span className="optional">(optional)</span>
-                  </label>
-                  <input id={fieldId('song')} value={d.songRequest} onChange={(e) => update('songRequest', e.target.value)} placeholder="A song that will get you dancing" />
-                </div>
+                {canSee('sangeet') && (
+                  <div className="field">
+                    <label htmlFor={fieldId('song')}>
+                      Sangeet song request <span className="optional">(optional)</span>
+                    </label>
+                    <input id={fieldId('song')} value={d.songRequest} onChange={(e) => update('songRequest', e.target.value)} placeholder="A song that will get you dancing" />
+                  </div>
+                )}
               </>
             )}
 
@@ -306,6 +332,13 @@ export function RsvpSection() {
             </div>
 
             <div ref={statusRef} tabIndex={-1} aria-live="polite" className="rsvp-status">
+              {status.kind === 'duplicate' && (
+                <div className="notice notice--info" role="alert">
+                  <p>
+                    <strong>You have already RSVP’d.</strong> To make any changes, please connect with the bride or groom directly.
+                  </p>
+                </div>
+              )}
               {status.kind === 'error' && (
                 <div className="notice notice--error" role="alert">
                   <p>
@@ -316,7 +349,6 @@ export function RsvpSection() {
             </div>
           </form>
         )}
-        <PariSays>{s.pari}</PariSays>
       </div>
     </section>
   );

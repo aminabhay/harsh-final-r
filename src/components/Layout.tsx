@@ -3,7 +3,7 @@ import { characters } from '../config/models';
 import { useActiveChapter } from '../lib/scroll';
 import { useUi, ui } from '../lib/ui';
 import { CHAPTERS } from '../config/world';
-import { Close, Menu, Note, Paw } from './icons';
+import { Close, Heart, Menu, Note, Paw } from './icons';
 import { music, musicSupported, useMusicPlaying } from '../lib/music';
 
 /* ------------------------------------------------------------------ */
@@ -105,65 +105,6 @@ function MusicToggle() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Ask Pari: a tiny navigation helper (not a chatbot)                   */
-/* ------------------------------------------------------------------ */
-
-export function AskPari() {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const btn = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        btn.current?.focus();
-      }
-    };
-    const onDown = (e: PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onDown);
-    root.current?.querySelector<HTMLAnchorElement>('a')?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onDown);
-    };
-  }, [open]);
-
-  const items = [
-    { href: '#celebrations', label: 'Celebrations' },
-    { href: '#directions', label: 'Directions' },
-    { href: '#rsvp', label: 'RSVP' },
-    { href: '#story', label: 'Back to the story' },
-  ];
-  return (
-    <div className="ask-pari" ref={root}>
-      {open && (
-        <div className="ask-pari__menu" id="ask-pari-menu">
-          <p className="ask-pari__title">Where shall I take you?</p>
-          <ul>
-            {items.map((i) => (
-              <li key={i.href}>
-                <a href={i.href} onClick={() => setOpen(false)}>
-                  {i.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <button ref={btn} type="button" className="ask-pari__btn" aria-expanded={open} aria-controls="ask-pari-menu" onClick={() => setOpen((v) => !v)}>
-        <Paw width={22} height={22} />
-        <span>Ask Pari</span>
-      </button>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Pari's short remarks (tap Pari in 3D, or the "say hello" button)     */
 /* ------------------------------------------------------------------ */
 
@@ -247,6 +188,12 @@ export function Footer({ canUse3d, simple, onToggleSimple }: { canUse3d: boolean
           Switch to {simple ? 'the 3D story' : 'Simple View'}
         </button>
       )}
+      <p className="made-with">
+        Made with <Heart className="made-with__heart" /><span className="visually-hidden">love</span> by{' '}
+        <a href="https://myweddingo.com" target="_blank" rel="noopener noreferrer">
+          MyWeddingo
+        </a>
+      </p>
     </footer>
   );
 }

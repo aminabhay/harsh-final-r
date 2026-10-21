@@ -20,13 +20,19 @@ export interface Segment {
   /** Fraction of the curve's length at which the paper path starts and ends. */
   tEdgeA: number;
   tEdgeB: number;
+  /** Curve length in metres. */
+  length: number;
+  maxSpeed: number;
 }
+
+const DEFAULT_SPEED = 6;
 
 const PATH_Y = -0.04;
 const v = (a: V3) => new THREE.Vector3(...a);
 
-const ROUTE: { from: IslandId; to: IslandId; f0: number }[] = [
-  { from: 'invite', to: 'pitch', f0: 0 },
+/** maxSpeed: top running speed in m/s (default DEFAULT_SPEED). */
+const ROUTE: { from: IslandId; to: IslandId; f0: number; maxSpeed?: number }[] = [
+  { from: 'invite', to: 'pitch', f0: 0, maxSpeed: 2.6 },
   { from: 'pitch', to: 'cinema', f0: 1 },
   { from: 'cinema', to: 'proposal', f0: 2 },
   { from: 'proposal', to: 'family', f0: 3 },
@@ -49,7 +55,7 @@ export const segments: Segment[] = ROUTE.map((r) => {
   const l1 = spotA.distanceTo(edgeA);
   const l2 = edgeA.distanceTo(edgeB);
   const total = l1 + l2 + edgeB.distanceTo(spotB);
-  return { ...r, curve, edgeA, edgeB, tEdgeA: l1 / total, tEdgeB: (l1 + l2) / total };
+  return { ...r, curve, edgeA, edgeB, tEdgeA: l1 / total, tEdgeB: (l1 + l2) / total, length: curve.getLength(), maxSpeed: r.maxSpeed ?? DEFAULT_SPEED };
 });
 
 /** Island Pari rests on when she isn't running. */
@@ -76,4 +82,8 @@ export const pariState = {
   f: 0,
   running: false,
   restingAt: 'invite' as IslandId,
+  /** World position while running (for the camera to follow). */
+  pos: new THREE.Vector3(),
+  /** True once the running Pari is mounted and updating `f`. */
+  ready: false,
 };

@@ -11,7 +11,6 @@ import type { CharacterId } from '../config/models';
 export type Dialog =
   | { type: 'event'; id: EventId }
   | { type: 'lightbox'; items: SiteImage[]; index: number; title?: string }
-  | { type: 'maldives' }
   | null;
 
 interface UiState {

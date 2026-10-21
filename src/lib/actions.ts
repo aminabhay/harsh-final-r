@@ -13,7 +13,6 @@ export const openFamilyPhoto = (key: ImageKey) =>
 
 export const openAlbum = (index = 0) => ui.openDialog({ type: 'lightbox', items: albumImages(), index, title: 'Photo album' });
 
-export const openKeepsake = () => ui.openDialog({ type: 'maldives' });
 
 export const greetPari = () => {
   const lines = story.home.pariReactions;

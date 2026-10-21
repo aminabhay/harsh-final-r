@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { palette } from '../../config/theme';
 import { islands } from '../../config/world';
 import { ui, useUi } from '../../lib/ui';
-import { openAlbum, openKeepsake, greetPari } from '../../lib/actions';
+import { openAlbum, greetPari } from '../../lib/actions';
 import { Character, RestingPari } from '../Character';
 import { useWorld } from '../context';
 import { G, Island, Label, PhotoFrame, Vase, mat, roseGold, useCanvasTexture, useClickable } from '../parts';
@@ -228,24 +228,6 @@ function Kitchen() {
   );
 }
 
-function Keepsake() {
-  const click = useClickable(openKeepsake);
-  return (
-    <group position={[2.9, 0, 0.3]} rotation={[0, -0.6, 0]} {...click}>
-      {/* a little travel case with tags and a shell */}
-      <mesh geometry={G.box} material={mat(palette.sea, { rough: 0.6 })} position={[0, 0.3, 0]} scale={[0.55, 0.45, 0.22]} castShadow />
-      <mesh geometry={G.box} material={roseGold()} position={[0, 0.3, 0]} scale={[0.56, 0.04, 0.23]} />
-      <mesh geometry={G.torus} material={roseGold()} position={[0, 0.56, 0]} scale={[0.09, 0.07, 1]} />
-      <mesh geometry={G.box} material={mat(palette.butter)} position={[0.2, 0.18, 0.12]} rotation={[0, 0, 0.3]} scale={[0.12, 0.07, 0.005]} />
-      <Label size={0.035} font="sans" position={[0.2, 0.18, 0.126]} rotation={[0, 0, 0.3]}>
-        MLE
-      </Label>
-      <mesh geometry={G.sphere} material={mat('#FBE3D6', { rough: 0.4 })} position={[-0.42, 0.06, 0.08]} scale={[0.09, 0.06, 0.08]} castShadow />
-      <mesh geometry={G.box} scale={[0.9, 0.8, 0.6]} position={[0, 0.35, 0]} visible={false} />
-    </group>
-  );
-}
-
 function PetBed() {
   return (
     <group position={[1.6, 0, 0.75]}>
@@ -268,18 +250,17 @@ export function HomeScene() {
       <Sofa />
       <CoachingBoard />
       <Kitchen />
-      <Keepsake />
       <PetBed />
       <KickableBall />
       {/* photo frames on the back wall open the album */}
       <group position={[-1.75, 1.85, -3.3]}>
-        <PhotoFrame imageKey="couplePortrait" width={0.62} height={0.48} onSelect={() => openAlbum(0)} />
+        <PhotoFrame imageKey="photoForehead" width={0.62} height={0.42} onSelect={() => openAlbum(5)} />
       </group>
       <group position={[-1.15, 1.3, -3.3]}>
-        <PhotoFrame imageKey="album05" width={0.36} height={0.44} onSelect={() => openAlbum(5)} border={0.04} />
+        <PhotoFrame imageKey="photoHome" width={0.36} height={0.46} onSelect={() => openAlbum(1)} border={0.04} />
       </group>
       <group position={[-2.3, 1.3, -3.3]}>
-        <PhotoFrame imageKey="album06" width={0.36} height={0.44} onSelect={() => openAlbum(6)} border={0.04} />
+        <PhotoFrame imageKey="photoPromise" width={0.36} height={0.46} onSelect={() => openAlbum(3)} border={0.04} />
       </group>
       <Vase position={[2.55, 0, -2.75]} blooms={[palette.blush, '#FFFFFF', palette.lavender, palette.butter]} />
       <Character id="harsh" position={[-0.35, 0, -0.75]} rotationY={0.35} />
