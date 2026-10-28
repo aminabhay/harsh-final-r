@@ -146,7 +146,7 @@ main,
   pointer-events: none;
 }
 
-.is-3d main section :where(.hero__panel, .chapter__panel, .event-list, .gallery__inner, .rsvp, .scroll-cue) {
+.is-3d main section :where(.hero__panel, .chapter__panel, .event-list, .gallery__inner, .rsvp) {
   pointer-events: auto;
 }
 
@@ -619,27 +619,6 @@ main,
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-soft);
-}
-
-.scroll-cue {
-  position: absolute;
-  left: 50%;
-  bottom: calc(18px + var(--safe-b));
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  color: var(--text-soft);
-  text-decoration: none;
-  background: rgba(255, 249, 243, 0.7);
-}
-
-.scroll-cue svg {
-  animation: nudge 2.4s ease-in-out infinite;
 }
 
 @keyframes nudge {
@@ -1958,9 +1937,6 @@ main,
     font-size: clamp(2.4rem, 11.5vw, 3.6rem);
   }
 
-  .scroll-cue {
-    display: none;
-  }
 
   .chapter {
     min-height: auto;
@@ -1998,13 +1974,14 @@ main,
   }
 
   @media (max-width: 400px) {
-  .phone-seq {
-    grid-template-columns: 104px 1fr;
-    gap: 12px;
-  }
-  .phone {
-    width: 104px;
-    height: 151px;
+    .phone-seq {
+      grid-template-columns: 104px 1fr;
+      gap: 12px;
+    }
+    .phone {
+      width: 104px;
+      height: 151px;
+    }
   }
 }
 
@@ -2026,10 +2003,6 @@ main,
   padding-bottom: 8vh;
   max-width: 1180px;
   margin: 0 auto;
-}
-
-.is-simple .scroll-cue {
-  display: none;
 }
 
 .is-simple .chapter {
@@ -2178,4 +2151,112 @@ html.scroll-hold body {
 .notice--info {
   background: var(--soft-pink);
   border: 1.5px solid var(--rose-gold);
+}
+
+/* ------------------------------------------------------------------
+   Scroll hint (always visible, bottom centre)
+------------------------------------------------------------------- */
+
+.scroll-hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + var(--safe-b));
+  z-index: 22;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 249, 243, 0.95);
+  border: 1.5px solid var(--rose-gold);
+  box-shadow: var(--shadow);
+  color: var(--rose-deep);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.scroll-hint.is-hidden,
+.modal-open .scroll-hint {
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
+
+.scroll-hint__mouse {
+  position: relative;
+  width: 18px;
+  height: 28px;
+  border: 2px solid currentColor;
+  border-radius: 10px;
+}
+
+.scroll-hint__wheel {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 4px;
+  height: 7px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: scroll-wheel 1.6s ease-in-out infinite;
+}
+
+.scroll-hint__chevrons {
+  display: grid;
+  gap: 1px;
+}
+
+.scroll-hint__chevrons i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  animation: scroll-chevron 1.6s ease-in-out infinite;
+}
+
+.scroll-hint__chevrons i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes scroll-wheel {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  30% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+}
+
+@keyframes scroll-chevron {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(-2px) rotate(45deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+
+/* Keep Pari's remarks and the loading pill clear of the hint. */
+.pari-toast-region {
+  bottom: calc(76px + var(--safe-b));
+}
+
+.loading-pill {
+  bottom: calc(68px + var(--safe-b));
 }

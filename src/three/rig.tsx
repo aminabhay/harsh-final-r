@@ -14,6 +14,11 @@ const followTarget = new THREE.Vector3();
 const followOffsetWide = new THREE.Vector3(0, 2.2, 6.4);
 const followOffsetTall = new THREE.Vector3(0, 2.6, 7.2);
 const followLook = new THREE.Vector3(0, 0.35, 0);
+const followLead = new THREE.Vector3();
+/** How far the camera looks ahead of Pari while she runs (m), so she sits on the trailing
+ *  side of the frame: left while running forward, right while running back. */
+const LEAD_WIDE = 1.4;
+const LEAD_TALL = 0.65;
 const v = (a: V3) => new THREE.Vector3(...a);
 const damp = THREE.MathUtils.damp;
 
@@ -82,11 +87,14 @@ export function CameraRig() {
 
     // During a journey the camera follows Pari from the side, so she never leaves the shot.
     // It eases in/out over the first and last 15% so it hands over smoothly to each island.
+    let follow = 0;
     if (pariState.running && !reduced) {
       const t = f - Math.floor(f);
       const w = THREE.MathUtils.smoothstep(t, 0, 0.15) * (1 - THREE.MathUtils.smoothstep(t, 0.85, 1));
-      followPos.copy(pariState.pos).add(tall ? followOffsetTall : followOffsetWide);
-      followTarget.copy(pariState.pos).add(followLook);
+      follow = w;
+      followLead.copy(pariState.dir).multiplyScalar(tall ? LEAD_TALL : LEAD_WIDE);
+      followPos.copy(pariState.pos).add(followLead).add(tall ? followOffsetTall : followOffsetWide);
+      followTarget.copy(pariState.pos).add(followLead).add(followLook);
       s.pos.lerp(followPos, w);
       s.target.lerp(followTarget, w);
       s.shiftX *= 1 - w;
@@ -112,7 +120,8 @@ export function CameraRig() {
       c.fov = s.fov;
       c.init = true;
     } else {
-      const k = 4.2;
+      // Track tightly while following Pari so she can't out-run the frame.
+      const k = THREE.MathUtils.lerp(4.2, 12, follow);
       c.pos.set(damp(c.pos.x, s.pos.x, k, dt), damp(c.pos.y, s.pos.y, k, dt), damp(c.pos.z, s.pos.z, k, dt));
       c.target.set(damp(c.target.x, s.target.x, k, dt), damp(c.target.y, s.target.y, k, dt), damp(c.target.z, s.target.z, k, dt));
       c.sx = damp(c.sx, s.shiftX, k, dt);

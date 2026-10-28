@@ -90,7 +90,8 @@ export function RunningPari() {
     const { seg, t } = travel;
     const p = seg.curve.getPointAt(t);
     seg.curve.getTangentAt(t, tan);
-    const moved = st.lastT < 0 ? 0 : p.distanceTo(st.last);
+    const entering = st.lastT < 0;
+    const moved = entering ? 0 : p.distanceTo(st.last);
     const backwards = st.lastT >= 0 && t < st.lastT;
     st.last.copy(p);
     st.lastT = t;
@@ -99,6 +100,14 @@ export function RunningPari() {
     g.position.copy(p);
     pariState.pos.copy(p);
     const yaw = Math.atan2(tan.x, tan.z) + (backwards ? Math.PI : 0);
+    // Direction of travel (kept while she pauses, so the camera doesn't swing back).
+    if (entering) {
+      // Entering from the far end of the route means she's running back.
+      pariState.dir.copy(tan).setY(0).normalize().multiplyScalar(t > 0.5 ? -1 : 1);
+    } else if (moved > 1e-4) {
+      tan.setY(0).normalize().multiplyScalar(backwards ? -1 : 1);
+      pariState.dir.lerp(tan, Math.min(1, dt * 6)).normalize();
+    }
     // Shortest-path turn towards the running direction.
     let d = yaw - st.yaw;
     d = Math.atan2(Math.sin(d), Math.cos(d));

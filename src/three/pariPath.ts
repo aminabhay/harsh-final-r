@@ -84,6 +84,8 @@ export const pariState = {
   restingAt: 'invite' as IslandId,
   /** World position while running (for the camera to follow). */
   pos: new THREE.Vector3(),
+  /** Horizontal unit vector she is running along (flips when the guest scrolls back up). */
+  dir: new THREE.Vector3(1, 0, 0),
   /** True once the running Pari is mounted and updating `f`. */
   ready: false,
 };

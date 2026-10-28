@@ -8,7 +8,7 @@ import { CelebrationsSection } from './components/Celebrations';
 import { GallerySection } from './components/Gallery';
 import { RsvpSection } from './components/Rsvp';
 import { Dialogs } from './components/Dialogs';
-import { Footer, LoadingPill, Nav, Notices, PariToast } from './components/Layout';
+import { Footer, LoadingPill, Nav, Notices, PariToast, ScrollHint } from './components/Layout';
 
 // The 3D bundle loads after the HTML is usable.
 const Experience = lazy(() => import('./three/Experience'));
@@ -91,6 +91,7 @@ export default function App() {
       </main>
       <Footer canUse3d={webgl} simple={simple} onToggleSimple={toggleSimple} />
       <PariToast />
+      <ScrollHint />
       <Dialogs />
     </>
   );

@@ -105,6 +105,45 @@ function MusicToggle() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Scroll hint: always visible (bottom centre) until the end of the page */
+/* ------------------------------------------------------------------ */
+
+export function ScrollHint() {
+  const [atEnd, setAtEnd] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const doc = document.documentElement;
+      setAtEnd(window.scrollY + window.innerHeight >= doc.scrollHeight - 120);
+    };
+    const on = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener('scroll', on, { passive: true });
+    window.addEventListener('resize', on);
+    return () => {
+      window.removeEventListener('scroll', on);
+      window.removeEventListener('resize', on);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return (
+    <div className={`scroll-hint${atEnd ? ' is-hidden' : ''}`} aria-hidden="true">
+      <span className="scroll-hint__mouse">
+        <span className="scroll-hint__wheel" />
+      </span>
+      <span className="scroll-hint__label">Scroll</span>
+      <span className="scroll-hint__chevrons">
+        <i />
+        <i />
+      </span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Pari's short remarks (tap Pari in 3D, or the "say hello" button)     */
 /* ------------------------------------------------------------------ */
 

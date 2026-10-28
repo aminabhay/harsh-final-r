@@ -90,7 +90,7 @@ export const story = {
     title: 'Half Bengali. Half Maharashtrian. Fully in love.',
     body: [
       'With this love story, he became half Bengali, and she became half Maharashtrian.',
-      'Harsh, once a professional footballer, is now Head Coach of Skorost United. Rimi began as a chef and is now a hospitality manager in the Maldives.',
+      'Harsh, once a professional footballer, is now Head Coach of Skorost United. Rimi began as a chef and is now an L&D Professional in the Maldives.',
     ],
     interactions: {
       football: 'Kick the football',

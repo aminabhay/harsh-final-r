@@ -10,7 +10,6 @@ import { audience } from '../lib/audience';
 import { formatEventDate } from '../lib/dates';
 import { openTicket, openFamilyPhoto, openAlbum } from '../lib/actions';
 import { Countdown } from './Celebrations';
-import { ArrowDown } from './icons';
 import { PariSays } from './PariSays';
 
 /* ------------------------------------------------------------------ */
@@ -125,9 +124,6 @@ export function Hero({ reduced, is3d }: { reduced: boolean; is3d: boolean }) {
       <figure className="simple-figure hero__figure">
         <img src={images.photoThree.src} alt={images.photoThree.alt} style={{ objectPosition: images.photoThree.focus }} />
       </figure>
-      <a className="scroll-cue" href="#story">
-        <ArrowDown /> <span>Scroll to begin the story</span>
-      </a>
     </section>
   );
 }

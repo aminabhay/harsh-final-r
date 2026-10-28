@@ -46,7 +46,7 @@ export const site = {
       name: 'Rimi',
       hometown: 'Kolkata',
       formerly: 'Chef',
-      now: 'Hospitality manager in the Maldives',
+      now: 'L&D Professional in the Maldives',
       previously: 'Worked in Qatar',
     },
   },
