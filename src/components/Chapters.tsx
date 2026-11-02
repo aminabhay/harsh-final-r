@@ -89,7 +89,7 @@ function useEnvelopeScrollGate(enabled: boolean, reduced: boolean) {
   }, [enabled, reduced]);
 }
 
-const wedding = eventById('wedding');
+const headline = eventById(audience.headline);
 const reception = eventById('reception');
 
 export function Hero({ reduced, is3d }: { reduced: boolean; is3d: boolean }) {
@@ -110,9 +110,9 @@ export function Hero({ reduced, is3d }: { reduced: boolean; is3d: boolean }) {
         <div className={`hero__reveal${revealed ? ' is-revealed' : ''}`} aria-hidden={!revealed}>
           <div className="hero__reveal-inner">
             <p className="hero__date">
-              <span className="hero__date-day">{formatEventDate(wedding)}</span>
+              <span className="hero__date-day">{formatEventDate(headline)}</span>
               <span className="hero__date-place">
-                {wedding.city}
+                {headline.city}
                 {audience.mentionReception && ` · Reception ${reception.day} December, ${reception.city}`}
               </span>
             </p>

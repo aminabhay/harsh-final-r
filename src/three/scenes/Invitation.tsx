@@ -11,12 +11,13 @@ import { eventById } from '../../config/events';
 import { audience } from '../../lib/audience';
 import { eventStartUtc, formatEventTime } from '../../lib/dates';
 
-const wedding = eventById('wedding');
+// The date revealed on the card depends on the guest's link (see config/audiences.ts).
+const headline = eventById(audience.headline);
 const reception = eventById('reception');
 const MONTH = 'December';
-const weddingStart = eventStartUtc(wedding);
-const weekday = weddingStart
-  ? `${new Date(Date.UTC(site.weddingYear!, wedding.month - 1, wedding.day)).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }).toUpperCase()} · `
+const headlineStart = eventStartUtc(headline);
+const weekday = headlineStart
+  ? `${new Date(Date.UTC(site.weddingYear!, headline.month - 1, headline.day)).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }).toUpperCase()} · `
   : '';
 import { RestingPari } from '../Character';
 import { useWorld } from '../context';
@@ -88,14 +89,14 @@ function Envelope() {
           {`& ${site.couple.fullNames.rimi}`}
         </Label>
         <Label size={0.06} font="italic" position={[0, 0.005, 0.012]}>
-          are getting married
+          {audience.cardLine}
         </Label>
         {/* the date reveal */}
         <Label size={0.125} position={[0, -0.13, 0.012]} color="#8A5A50">
-          {`${wedding.day} ${MONTH} ${site.weddingYear ?? ''}`.trim()}
+          {`${headline.day} ${MONTH} ${site.weddingYear ?? ''}`.trim()}
         </Label>
         <Label size={0.038} font="sans" color={palette.text} position={[0, -0.255, 0.012]} letterSpacing={0.14}>
-          {`${weekday}${audience.showWeddingTime ? `${formatEventTime(wedding).toUpperCase()} · ` : ''}${wedding.city.toUpperCase()}`}
+          {`${weekday}${formatEventTime(headline).toUpperCase()} · ${headline.city.toUpperCase()}`}
         </Label>
         {audience.mentionReception && (
           <Label size={0.034} font="sans" color={palette.roseGold} position={[0, -0.355, 0.012]} letterSpacing={0.14}>

@@ -70,11 +70,11 @@ Configured in `src/config/audiences.ts`:
 
 | Link | Guest | Sees |
 |---|---|---|
-| `https://your-site/` | Default (most guests) | Reception only. The invitation still says the wedding is on 5 December in Kolkata (no time). |
+| `https://your-site/` | Default (most guests) | Reception only. The invitation card and hero show the reception date (12 December, Navi Mumbai); the wedding date is never shown. |
 | `https://your-site/?invite=kolkata` | Wedding guests | Wedding only; no mention of the reception. |
 | `https://your-site/?invite=family` | Close family | All four celebrations. |
 
-This controls the event cards, the 3D pavilions, the invitation card, the hero date line, the
+This controls the event cards, the 3D pavilions, the date on the invitation card and hero (`headline`), the
 countdown, the RSVP choices (single-event guests don't have to pick) and the Sangeet song
 request. Each RSVP records which link was used (`audience`). Change the codes in
 `audiences.ts`; unknown codes fall back to the default. It curates the view, it is not

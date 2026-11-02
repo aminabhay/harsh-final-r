@@ -3,7 +3,8 @@ import type { EventId } from './events';
 /**
  * Who sees which celebrations. The audience comes from the link the guest was sent:
  *
- *   https://site/                     -> reception guests (the default, most common)
+ *   https://site/                     -> reception guests (the default, most common; they
+ *                                        never see the wedding date)
  *   https://site/?invite=kolkata      -> wedding guests
  *   https://site/?invite=family       -> everything
  *
@@ -22,10 +23,13 @@ export interface Audience {
   events: EventId[];
   /** The event the countdown counts down to. */
   countdownTo: EventId;
-  /** Mention the reception (12 Dec, Navi Mumbai) on the invitation card and hero. */
+  /** The date revealed on the invitation card and in the hero. Guests never see the date
+   *  of an event outside `events`. */
+  headline: EventId;
+  /** Line under the names on the invitation card. */
+  cardLine: string;
+  /** Also mention the reception (12 Dec, Navi Mumbai) under the headline date. */
   mentionReception: boolean;
-  /** Show the wedding ceremony time on the invitation card (only for wedding guests). */
-  showWeddingTime: boolean;
 }
 
 export const AUDIENCE_PARAM = 'invite';
@@ -36,23 +40,26 @@ export const audiences: Record<AudienceId, Audience> = {
     code: null,
     events: ['reception'],
     countdownTo: 'reception',
-    mentionReception: true,
-    showWeddingTime: false,
+    headline: 'reception',
+    cardLine: 'invite you to their wedding reception',
+    mentionReception: false,
   },
   wedding: {
     id: 'wedding',
     code: 'kolkata',
     events: ['wedding'],
     countdownTo: 'wedding',
+    headline: 'wedding',
+    cardLine: 'are getting married',
     mentionReception: false,
-    showWeddingTime: true,
   },
   all: {
     id: 'all',
     code: 'family',
     events: ['sangeet', 'haldi', 'wedding', 'reception'],
     countdownTo: 'wedding',
+    headline: 'wedding',
+    cardLine: 'are getting married',
     mentionReception: true,
-    showWeddingTime: true,
   },
 };
